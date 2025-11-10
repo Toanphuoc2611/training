@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>
-
+<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
 <html>
 <head>
     <title>Đăng nhập hệ thống</title>
@@ -12,14 +12,7 @@
 </head>
 <body>
 <h2>Trang đăng nhập</h2>
-
-<%-- Hiển thị thông báo lỗi nếu có --%>
-<%
-    String error = (String) request.getAttribute("error");
-    if (error != null) {
-%>
-<div class="error"><%= error %></div>
-<% } %>
+<html:errors />
 
 <html:form action="/login" method="post">
     <table>
