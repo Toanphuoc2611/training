@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN"
+          "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+
+<struts-config>
+
+    <!-- Form -->
+    <form-beans>
+        <form-bean name="loginForm" type="com.demo.form.LoginForm"/>
+        <form-bean name="searchForm" type="com.demo.form.SearchForm"/>
+        <form-bean name="customerForm" type="com.demo.form.CustomerForm"/>
+    </form-beans>
+
+    <!-- Global Exception -->
+    <global-exceptions>
+
+    </global-exceptions>
+
+    <!-- Action -->
+    <action-mappings>
+        <action path="/login"
+                type="com.demo.action.LoginAction"
+                name="loginForm"
+                scope="request"
+                input="/login.jsp"
+                validate="true">
+            <forward name="success" path="/search.do" redirect="true"/>
+            <forward name="failure" path="/login.jsp"/>
+        </action>
+
+        <action path="/search"
+                type="com.demo.action.SearchAction"
+                name="searchForm"
+                scope="request"
+                input="/search.jsp"
+                validate="false">
+            <forward name="success" path="/search.jsp"/>
+        </action>
+
+        <action path="/edit"
+                type="com.demo.action.EditAction"
+                name="customerForm"
+                scope="request"
+                input="/edit.jsp"
+                validate="true">
+            <forward name="failure" path="/search.do" redirect="true"/>
+            <forward name="success" path="/edit.jsp"/>
+        </action>
+
+        <action path="/save"
+                type="com.demo.action.SaveAction"
+                name="customerForm"
+                scope="request"
+                input="/edit.jsp"
+                validate="true">
+            <forward name="success" path="/search.do" redirect="true"/>
+            <forward name="failure" path="/edit.jsp"/>
+        </action>
+
+        <action path="/delete"
+                type="com.demo.action.DeleteAction"
+                validate="false">
+            <forward name="success" path="/search.do" redirect="true"/>
+            <forward name="failure" path="/search.do" redirect="true"/>
+        </action>
+
+    </action-mappings>
+
+    <!-- Nạp file message -->
+    <message-resources parameter="com.demo.messageResource" />
+
+    <!-- Plugin cho validator -->
+    <plug-in className="org.apache.struts.validator.ValidatorPlugIn">
+        <set-property property="pathnames" 
+                      value="/WEB-INF/validator-rules.xml,/WEB-INF/validation.xml"/>
+    </plug-in>
+
+</struts-config>
