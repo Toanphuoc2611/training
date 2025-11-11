@@ -283,7 +283,7 @@
                             "disabled" : "" %>>
                 Đầu
             </button>
-
+Gia
             <button type="button" onclick="goToPage('previous')"
                     <%= request.getAttribute("currentPage") != null &&
                             ((Integer)request.getAttribute("currentPage")) == 1 ?

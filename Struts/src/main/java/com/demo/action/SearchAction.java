@@ -9,6 +9,7 @@ import org.apache.struts.action.ActionMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,17 +21,54 @@ public class SearchAction extends Action {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
                                  HttpServletRequest request, HttpServletResponse response)
             throws Exception {
-
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
         SearchForm searchForm = (SearchForm) form;
+        HttpSession session = request.getSession();
 
-        // Lấy tham số action (search, first, previous, next, last)
+        // Lấy tham số
         String action = request.getParameter("action");
+        String fromPage = request.getParameter("from");
 
+        // Kiểm tra xem có phải quay lại từ trang edit hoặc sau khi delete không
+        if ("edit".equals(fromPage) || "delete".equals(fromPage)) {
+            // Load lại searchForm từ session
+            SearchForm savedForm = (SearchForm) session.getAttribute("savedSearchForm");
+            if (savedForm != null) {
+                // Copy toàn bộ điều kiện tìm kiếm từ session
+                searchForm.setCustomerName(savedForm.getCustomerName());
+                searchForm.setGender(savedForm.getGender());
+                searchForm.setBirthDateFrom(savedForm.getBirthDateFrom());
+                searchForm.setBirthDateTo(savedForm.getBirthDateTo());
+                searchForm.setCurrentPage(savedForm.getCurrentPage());
+                searchForm.setPageSize(savedForm.getPageSize());
+
+                System.out.println("=== Restored Search Criteria ===");
+                System.out.println("Customer Name: " + searchForm.getCustomerName());
+                System.out.println("Gender: " + searchForm.getGender());
+                System.out.println("Birth Date From: " + searchForm.getBirthDateFrom());
+                System.out.println("Birth Date To: " + searchForm.getBirthDateTo());
+                System.out.println("Current Page: " + searchForm.getCurrentPage());
+            }
+        }
+
+        // Xử lý phân trang
         if (action != null) {
             handlePagination(searchForm, action);
         }
 
-        // Gọi service để lấy dữ liệu (ở đây tôi dùng data mẫu)
+        // Lưu điều kiện tìm kiếm hiện tại vào session (để dùng khi quay lại)
+        SearchForm savedForm = new SearchForm();
+        savedForm.setCustomerName(searchForm.getCustomerName());
+        savedForm.setGender(searchForm.getGender());
+        savedForm.setBirthDateFrom(searchForm.getBirthDateFrom());
+        savedForm.setBirthDateTo(searchForm.getBirthDateTo());
+        savedForm.setCurrentPage(searchForm.getCurrentPage());
+        savedForm.setPageSize(searchForm.getPageSize());
+        session.setAttribute("savedSearchForm", savedForm);
+
+        // Gọi service để lấy dữ liệu
         List<Customer> allCustomers = getAllCustomers();
 
         // Filter dữ liệu theo điều kiện tìm kiếm
@@ -38,7 +76,24 @@ public class SearchAction extends Action {
 
         // Tính toán phân trang
         int totalRecords = filteredCustomers.size();
-        int totalPages = (int) Math.ceil((double) totalRecords / searchForm.getPageSize());
+        int totalPages = totalRecords > 0 ? (int) Math.ceil((double) totalRecords / searchForm.getPageSize()) : 1;
+
+        // Xử lý trường hợp last page
+        if ("last".equals(action) && totalPages > 0) {
+            searchForm.setCurrentPage(totalPages);
+            // Cập nhật lại savedForm
+            savedForm.setCurrentPage(totalPages);
+            session.setAttribute("savedSearchForm", savedForm);
+        }
+
+        // Đảm bảo currentPage không vượt quá totalPages
+        if (searchForm.getCurrentPage() > totalPages && totalPages > 0) {
+            searchForm.setCurrentPage(totalPages);
+        }
+
+        if (searchForm.getCurrentPage() < 1) {
+            searchForm.setCurrentPage(1);
+        }
 
         // Lấy dữ liệu cho trang hiện tại
         List<Customer> pageCustomers = getPageData(filteredCustomers,
@@ -50,6 +105,13 @@ public class SearchAction extends Action {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalRecords", totalRecords);
         request.setAttribute("currentPage", searchForm.getCurrentPage());
+
+        // Log để debug
+        System.out.println("=== Search Results ===");
+        System.out.println("Total Records: " + totalRecords);
+        System.out.println("Total Pages: " + totalPages);
+        System.out.println("Current Page: " + searchForm.getCurrentPage());
+        System.out.println("Page Size: " + searchForm.getPageSize());
 
         return mapping.findForward("success");
     }
@@ -78,11 +140,11 @@ public class SearchAction extends Action {
             Date fromDate = null;
             Date toDate = null;
 
-            if (form.getBirthDateFrom() != null && !form.getBirthDateFrom().isEmpty()) {
+            if (form.getBirthDateFrom() != null && !form.getBirthDateFrom().trim().isEmpty()) {
                 fromDate = sdf.parse(form.getBirthDateFrom());
             }
 
-            if (form.getBirthDateTo() != null && !form.getBirthDateTo().isEmpty()) {
+            if (form.getBirthDateTo() != null && !form.getBirthDateTo().trim().isEmpty()) {
                 toDate = sdf.parse(form.getBirthDateTo());
             }
 
@@ -90,16 +152,15 @@ public class SearchAction extends Action {
                 boolean match = true;
 
                 // Filter by name
-                if (form.getCustomerName() != null && !form.getCustomerName().isEmpty()) {
+                if (form.getCustomerName() != null && !form.getCustomerName().trim().isEmpty()) {
                     if (!customer.getCustomerName().toLowerCase()
-                            .contains(form.getCustomerName().toLowerCase())) {
+                            .contains(form.getCustomerName().trim().toLowerCase())) {
                         match = false;
                     }
                 }
 
                 // Filter by gender
-                if (form.getGender() != null && !form.getGender().isEmpty()
-                        && !form.getGender().equals("all")) {
+                if (form.getGender() != null && !form.getGender().trim().isEmpty()) {
                     if (!customer.getGender().equals(form.getGender())) {
                         match = false;
                     }
@@ -129,14 +190,14 @@ public class SearchAction extends Action {
         int startIndex = (currentPage - 1) * pageSize;
         int endIndex = Math.min(startIndex + pageSize, customers.size());
 
-        if (startIndex >= customers.size()) {
+        if (startIndex >= customers.size() || customers.isEmpty()) {
             return new ArrayList<Customer>();
         }
 
         return customers.subList(startIndex, endIndex);
     }
 
-    // Dữ liệu mẫu - bạn thay thế bằng service thực tế
+    // Dữ liệu mẫu
     private List<Customer> getAllCustomers() {
         List<Customer> customers = new ArrayList<Customer>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
