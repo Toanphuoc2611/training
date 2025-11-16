@@ -196,12 +196,5 @@
         </div>
     </html:form>
 </div>
-
-<script>
-    // Set date input type
-    window.onload = function() {
-        document.getElementById('birthDate').type = 'date';
-    };
-</script>
 </body>
 </html>

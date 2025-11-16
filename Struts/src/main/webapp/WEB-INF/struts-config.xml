@@ -23,46 +23,20 @@
                 type="com.demo.action.LoginAction"
                 name="loginForm"
                 scope="request"
-                input="/login.jsp"
+                input="login.page"
                 validate="true">
-            <forward name="success" path="/search.do" redirect="true"/>
-            <forward name="failure" path="/login.jsp"/>
+            <forward name="success" path="/search.do?action=search" redirect="true"/>
+            <forward name="failure" path="login.page"/>
         </action>
 
         <action path="/search"
                 type="com.demo.action.SearchAction"
                 name="searchForm"
-                scope="request"
-                input="/search.jsp"
-                validate="false">
-            <forward name="success" path="/search.jsp"/>
-        </action>
-
-        <action path="/edit"
-                type="com.demo.action.EditAction"
-                name="customerForm"
-                scope="request"
-                input="/edit.jsp"
+                scope="session"
+                input="search.page"
+                parameter="action"
                 validate="true">
-            <forward name="failure" path="/search.do" redirect="true"/>
-            <forward name="success" path="/edit.jsp"/>
-        </action>
-
-        <action path="/save"
-                type="com.demo.action.SaveAction"
-                name="customerForm"
-                scope="request"
-                input="/edit.jsp"
-                validate="true">
-            <forward name="success" path="/search.do" redirect="true"/>
-            <forward name="failure" path="/edit.jsp"/>
-        </action>
-
-        <action path="/delete"
-                type="com.demo.action.DeleteAction"
-                validate="false">
-            <forward name="success" path="/search.do" redirect="true"/>
-            <forward name="failure" path="/search.do" redirect="true"/>
+            <forward name="init" path="search.page"/>
         </action>
 
     </action-mappings>
@@ -75,5 +49,12 @@
         <set-property property="pathnames" 
                       value="/WEB-INF/validator-rules.xml,/WEB-INF/validation.xml"/>
     </plug-in>
+
+    <plug-in className="org.apache.struts.tiles.TilesPlugin">
+        <set-property property="definitions-config"
+                      value="/WEB-INF/tiles-defs.xml" />
+        <set-property property="moduleAware" value="true" />
+    </plug-in>
+
 
 </struts-config>

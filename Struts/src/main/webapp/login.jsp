@@ -1,16 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>
 <%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
-<html>
-<head>
-    <title>Đăng nhập hệ thống</title>
-    <style>
-        body { font-family: Arial; margin: 50px; }
-        .error { color: red; margin-bottom: 10px; }
-        table { border-spacing: 5px; }
-    </style>
-</head>
-<body>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <h2>Trang đăng nhập</h2>
 <html:errors />
 
