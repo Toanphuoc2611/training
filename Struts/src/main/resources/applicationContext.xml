@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <!-- Database Configuration Properties -->
+    <bean id="propertyConfigurer" 
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:database.properties"/>
+    </bean>
+
+    <!-- DataSource -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${db.driver}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="maxActive" value="10"/>
+        <property name="maxIdle" value="5"/>
+    </bean>
+
+    <!-- Hibernate SessionFactory -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.use_sql_comments">false</prop>
+                <prop key="hibernate.jdbc.fetch_size">50</prop>
+                <prop key="hibernate.jdbc.batch_size">20</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+            </props>
+        </property>
+        <property name="mappingResources">
+            <list>
+                <value>com/demo/model/Customer.hbm.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- Transaction Manager -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <!-- DAO Beans -->
+    <bean id="customerDAO" class="com.demo.dao.CustomerDAO">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <!-- Service/BO Beans -->
+    <bean id="customerService" class="com.demo.bo.CustomerService">
+        <property name="customerDAO" ref="customerDAO"/>
+    </bean>
+
+    <!-- Transaction Advice -->
+    <bean id="transactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+        <property name="transactionManager" ref="transactionManager"/>
+        <property name="transactionAttributeSource">
+            <bean class="org.springframework.transaction.interceptor.MethodMapTransactionAttributeSource">
+                <property name="methodMap">
+                    <map>
+                        <entry key="com.demo.bo.CustomerService.get*" value="PROPAGATION_REQUIRED,readOnly"/>
+                        <entry key="com.demo.bo.CustomerService.*" value="PROPAGATION_REQUIRED"/>
+                        <entry key="com.demo.dao.CustomerDAO.get*" value="PROPAGATION_REQUIRED,readOnly"/>
+                        <entry key="com.demo.dao.CustomerDAO.*" value="PROPAGATION_REQUIRED"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- Action Beans for Struts Integration -->
+    <bean name="/search" class="com.demo.action.SearchAction" scope="prototype">
+        <property name="customerService" ref="customerService"/>
+    </bean>
+
+    <bean name="/edit" class="com.demo.action.EditAction" scope="prototype">
+        <property name="customerService" ref="customerService"/>
+    </bean>
+
+    <bean name="/delete" class="com.demo.action.DeleteAction" scope="prototype">
+        <property name="customerService" ref="customerService"/>
+    </bean>
+
+    <bean name="/login" class="com.demo.action.LoginAction" scope="prototype"/>
+
+</beans>

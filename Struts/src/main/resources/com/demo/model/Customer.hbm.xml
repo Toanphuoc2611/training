@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="com.demo.model.Customer" table="customer">
+        <id name="id" column="id" type="integer">
+            <generator class="native"/>
+        </id>
+        
+        <property name="customerName" column="customer_name" type="string" length="255" not-null="true"/>
+        <property name="birthDate" column="birth_date" type="date" not-null="false"/>
+        <property name="gender" column="gender" type="string" length="10" not-null="false"/>
+        <property name="address" column="address" type="string" length="500" not-null="false"/>
+    </class>
+</hibernate-mapping>
