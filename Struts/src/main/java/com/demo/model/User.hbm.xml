@@ -13,5 +13,15 @@
         <property name="password" column="password"/>
         <property name="deleted" column="delete"/>
         <property name="dateUpdate" column="date_update"/>
+        <query name="User.checkLogin">
+            <![CDATA[
+                select count(*) 
+                from User u 
+                where u.userId = :userId 
+                and u.password = :password
+            ]]>
+        </query>
+
     </class>
+    
 </hibernate-mapping>

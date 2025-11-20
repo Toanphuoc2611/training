@@ -39,8 +39,8 @@
         <property name="customerDao" ref="customerDao"/>
     </bean>
 
-    <!-- DAO -->
-    <bean id="customerDao" class="com.demo.daoImpl.CustomerDaoImpl">
+    <!-- DAO - Sử dụng SessionFactory thay vì HibernateTemplate -->
+    <bean id="customerDao" class="com.demo.daoImpl.CustomerDAOImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     <!-- User DAO -->

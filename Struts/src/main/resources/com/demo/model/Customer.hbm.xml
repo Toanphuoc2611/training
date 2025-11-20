@@ -13,4 +13,26 @@
         <property name="gender" column="gender" type="string" length="10" not-null="false"/>
         <property name="address" column="address" type="string" length="500" not-null="false"/>
     </class>
+
+    <!-- Named Queries - Dùng SessionFactory để execute -->
+    <query name="Customer.findById">
+        <![CDATA[from Customer c where c.id = :id]]>
+    </query>
+
+    <query name="Customer.findByName">
+        <![CDATA[from Customer c where lower(c.customerName) like lower(:name)]]>
+    </query>
+
+    <query name="Customer.searchByCondition">
+        <![CDATA[from Customer c where 1=1
+            and (:name is null or lower(c.customerName) like lower(:name))
+            and (:gender is null or c.gender = :gender)
+            and (:fromDate is null or c.birthDate >= :fromDate)
+            and (:toDate is null or c.birthDate <= :toDate)]]>
+    </query>
+
+    <query name="Customer.findAll">
+        <![CDATA[from Customer c order by c.id]]>
+    </query>
+
 </hibernate-mapping>
