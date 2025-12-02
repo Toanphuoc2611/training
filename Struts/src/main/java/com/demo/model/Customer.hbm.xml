@@ -1,7 +1,0 @@
-<class name="com.demo.model.Customer" table="CUSTOMER">
-    <id name="id" column="ID">
-        <generator class="native"/>
-    </id>
-    <property name="name" column="NAME"/>
-    <property name="email" column="EMAIL"/>
-</class>

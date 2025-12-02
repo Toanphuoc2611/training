@@ -1,63 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE struts-config PUBLIC
-          "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN"
-          "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
 
 <struts-config>
-
-    <!-- Form -->
+    
+    <!-- Form Beans -->
     <form-beans>
-        <form-bean name="loginForm" type="com.demo.form.LoginForm"/>
-        <form-bean name="searchForm" type="com.demo.form.SearchForm"/>
         <form-bean name="customerForm" type="com.demo.form.CustomerForm"/>
+        <form-bean name="searchForm" type="com.demo.form.SearchForm"/>
+        <form-bean name="columnForm" type="com.demo.form.ColumnForm"/>
     </form-beans>
-
-    <!-- Global Exception -->
-    <global-exceptions>
-
-    </global-exceptions>
-
-    <!-- Action -->
+    
+    <!-- Global Forwards -->
+    <global-forwards>
+        <forward name="success" path="/index.jsp"/>
+        <forward name="error" path="/error.jsp"/>
+        <forward name="login" path="/login.jsp"/>
+    </global-forwards>
+    
+    <!-- Action Mappings -->
     <action-mappings>
-        <action path="/login"
-                type="com.demo.action.LoginAction"
-                name="loginForm"
-                scope="request"
-                input="login.page"
-                validate="true">
-            <forward name="success" path="/search.do?action=search" redirect="true"/>
-            <forward name="failure" path="login.page"/>
+        
+        <!-- Login Action -->
+        <action path="/login" name="customerForm" type="com.demo.action.LoginAction" input="/login.jsp" scope="request">
+            <forward name="success" path="/search.jsp"/>
+            <forward name="failure" path="/login.jsp"/>
         </action>
-
-        <action path="/search"
-                type="com.demo.action.SearchAction"
-                name="searchForm"
-                scope="session"
-                input="search.page"
-                parameter="action"
-                validate="true">
-            <forward name="init" path="search.page"/>
+        
+        <!-- Search/List Action -->
+        <action path="/search" name="searchForm" type="com.demo.action.SearchAction" scope="request">
+            <forward name="success" path="/list.jsp"/>
+            <forward name="failure" path="/search.jsp"/>
         </action>
-
+        
+        <!-- Edit Action -->
+        <action path="/edit" name="customerForm" type="com.demo.action.EditAction" scope="request">
+            <forward name="success" path="/edit.jsp"/>
+            <forward name="view" path="/view.jsp"/>
+            <forward name="failure" path="/search.jsp"/>
+        </action>
+        
+        <!-- Delete Action -->
+        <action path="/delete" name="customerForm" type="com.demo.action.DeleteAction" scope="request">
+            <forward name="success" path="/search.jsp"/>
+            <forward name="failure" path="/search.jsp"/>
+        </action>
+        
+        <!-- Column Configuration Action -->
+        <action path="/column" name="columnForm" parameter="action"
+                type="com.demo.action.ColumnAction" scope="session">
+            <forward name="success" path="/columnConfig.jsp"/>
+            <forward name="displayItem" path="/displayItem.jsp"/>
+            <forward name="error" path="/columnConfig.jsp"/>
+        </action>
+        
     </action-mappings>
-
-    <!-- Nạp file message -->
-    <message-resources parameter="com.demo.messageResource" />
-
-    <!-- Plugin cho validator -->
-    <plug-in className="org.apache.struts.validator.ValidatorPlugIn">
-        <set-property property="pathnames" 
-                      value="/WEB-INF/validator-rules.xml,/WEB-INF/validation.xml"/>
-    </plug-in>
-
-    <plug-in className="org.apache.struts.tiles.TilesPlugin">
-        <set-property property="definitions-config"
-                      value="/WEB-INF/tiles-defs.xml" />
-        <set-property property="moduleAware" value="true" />
-    </plug-in>
-
-    <plug-in className="org.springframework.web.struts.ContextLoaderPlugIn">
-        <set-property property="contextConfigLocation" value="/WEB-INF/applicationContext.xml"/>
-    </plug-in>
-
+    
+    <!-- Message Resources -->
+    <message-resources parameter="com.demo.messageResource"/>
+    
 </struts-config>
