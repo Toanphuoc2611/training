@@ -53,6 +53,11 @@
             <forward name="error" path="/columnConfig.jsp"/>
         </action>
         
+        <!-- Product Action -->
+        <action path="/product" type="com.demo.action.ProductAction" scope="request">
+            <forward name="success" path="/displayItem.jsp"/>
+        </action>
+        
     </action-mappings>
     
     <!-- Message Resources -->
