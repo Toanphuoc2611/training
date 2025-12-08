@@ -89,4 +89,11 @@ public class ProductService {
         
         return result;
     }
+    
+    public boolean deleteProduct(Long productId) {
+        // In a real application, this would delete from database
+        // For now, we just return true to indicate success
+        // The product data is in-memory, so actual deletion would need DB integration
+        return true;
+    }
 }

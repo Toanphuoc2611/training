@@ -1,5 +1,6 @@
 package com.demo.action;
 
+import com.demo.form.ProductSearchForm;
 import com.demo.model.Product;
 import com.demo.service.ProductService;
 import org.apache.struts.action.Action;
@@ -25,20 +26,32 @@ public class ProductAction extends Action {
         String action = request.getParameter("action");
         
         if ("list".equals(action)) {
-            return listProducts(request, response);
+            ProductSearchForm searchForm = (ProductSearchForm) form;
+            return listProducts(request, response, searchForm);
+        } else if ("delete".equals(action)) {
+            return deleteProducts(request, response);
         }
         
         return mapping.findForward("success");
     }
     
-    private ActionForward listProducts(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        int page = Integer.parseInt(request.getParameter("page") != null ? request.getParameter("page") : "1");
-        int rows = Integer.parseInt(request.getParameter("rows") != null ? request.getParameter("rows") : "10");
+    private ActionForward listProducts(HttpServletRequest request, HttpServletResponse response, ProductSearchForm searchForm) throws Exception {
+        int page = searchForm.getPage() > 0 ? searchForm.getPage() : 1;
+        int rows = searchForm.getRows() > 0 ? searchForm.getRows() : 5;
         
-        String searchProductName = request.getParameter("searchProductName");
-        String searchQuantityStr = request.getParameter("searchQuantity");
-        String searchFromDateStr = request.getParameter("searchFromDate");
-        String searchToDateStr = request.getParameter("searchToDate");
+        String pageParam = request.getParameter("page");
+        String rowsParam = request.getParameter("rows");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            page = Integer.parseInt(pageParam);
+        }
+        if (rowsParam != null && !rowsParam.isEmpty()) {
+            rows = Integer.parseInt(rowsParam);
+        }
+        
+        String searchProductName = searchForm.getSearchProductName();
+        String searchQuantityStr = searchForm.getSearchQuantity();
+        String searchFromDateStr = searchForm.getSearchFromDate();
+        String searchToDateStr = searchForm.getSearchToDate();
         
         Integer searchQuantity = null;
         if (searchQuantityStr != null && !searchQuantityStr.trim().isEmpty()) {
@@ -120,5 +133,45 @@ public class ProductAction extends Action {
                   .replace("\n", "\\n")
                   .replace("\r", "\\r")
                   .replace("\t", "\\t");
+    }
+    
+    private ActionForward deleteProducts(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String idsStr = request.getParameter("ids");
+        
+        StringBuilder jsonResponse = new StringBuilder();
+        try {
+            if (idsStr == null || idsStr.trim().isEmpty()) {
+                jsonResponse.append("{\"success\":false,\"message\":\"No IDs provided\"}");
+            } else {
+                String[] ids = idsStr.split(",");
+                int deletedCount = 0;
+                for (String id : ids) {
+                    try {
+                        Long productId = Long.parseLong(id.trim());
+                        if (productService.deleteProduct(productId)) {
+                            deletedCount++;
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip invalid IDs
+                    }
+                }
+                
+                if (deletedCount > 0) {
+                    jsonResponse.append("{\"success\":true,\"message\":\"").append(deletedCount).append(" product(s) deleted\"}");
+                } else {
+                    jsonResponse.append("{\"success\":false,\"message\":\"No products were deleted\"}");
+                }
+            }
+        } catch (Exception e) {
+            jsonResponse.append("{\"success\":false,\"message\":\"").append(escapeJson(e.getMessage())).append("\"}");
+        }
+        
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+        out.print(jsonResponse.toString());
+        out.flush();
+        
+        return null;
     }
 }

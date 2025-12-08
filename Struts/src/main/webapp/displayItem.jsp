@@ -35,9 +35,19 @@
             cursor: pointer;
             border: none;
             font-size: 14px;
+            pointer-events: auto;
+            z-index: 10;
+            position: relative;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
         .action-buttons a:hover, .action-buttons button:hover {
             background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .action-buttons a:active, .action-buttons button:active {
+            transform: translateY(0);
         }
         .action-buttons .config-btn {
             background-color: #2196F3;
@@ -72,6 +82,16 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+            background-color: #fff;
+            color: #333;
+            cursor: text;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
+        }
+        .form-group input:focus {
+            outline: 2px solid #4CAF50;
+            border-color: #4CAF50;
         }
         .search-buttons {
             display: flex;
@@ -81,6 +101,23 @@
         .search-buttons button {
             padding: 8px 20px;
             font-size: 14px;
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 10;
+            position: relative;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        .search-buttons button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .search-buttons button:active {
+            transform: translateY(0);
         }
         .selected-columns-info {
             background: #e8f5e9;
@@ -91,6 +128,52 @@
         }
         .ui-jqgrid {
             margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .ui-jqgrid .ui-jqgrid-htable {
+            background-color: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+        .ui-jqgrid .ui-jqgrid-htable th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            padding: 12px;
+            text-align: left;
+            border-right: 1px solid #ddd;
+        }
+        .ui-jqgrid .ui-jqgrid-htable th:last-child {
+            border-right: none;
+        }
+        .ui-jqgrid .ui-jqgrid-btable td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #eee;
+        }
+        .ui-jqgrid .ui-jqgrid-btable tr:hover {
+            background-color: #f9f9f9;
+        }
+        .ui-jqgrid .ui-jqgrid-btable tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .ui-jqgrid .ui-jqgrid-btable td:last-child {
+            border-right: none;
+        }
+        .ui-jqgrid input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 1000;
+            position: relative;
+        }
+        .ui-jqgrid-pager {
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+            padding: 10px;
         }
     </style>
 </head>
@@ -156,11 +239,19 @@
             <div class="search-buttons">
                 <button type="button" onclick="searchProducts()" style="background-color: #4CAF50;">Tìm kiếm</button>
                 <button type="button" onclick="resetSearch()" style="background-color: #FF9800;">Xóa tìm kiếm</button>
+                <button type="button" id="deleteBtn" onclick="deleteSelected()" style="background-color: #f44336; display: none;">Xóa các mục được chọn</button>
             </div>
         </div>
 
         <table id="jqGrid"></table>
-        <div id="jqGridPager"></div>
+        
+        <div style="margin-top: 20px; text-align: center; display: flex; gap: 10px; justify-content: center;">
+            <button type="button" onclick="goToFirstPage()" style="background-color: #2196F3;">« Đầu</button>
+            <button type="button" onclick="goToPrevPage()" style="background-color: #2196F3;">< Trước</button>
+            <span id="pageInfo" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; min-width: 150px;">Trang 1</span>
+            <button type="button" onclick="goToNextPage()" style="background-color: #2196F3;">Tiếp ></button>
+            <button type="button" onclick="goToLastPage()" style="background-color: #2196F3;">Cuối »</button>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
@@ -170,6 +261,8 @@
 
     <script>
         var selectedColumns = [];
+        var currentPage = 1;
+        var totalPages = 1;
         
         function getSelectedColumns() {
             var spanElements = document.querySelectorAll('.selected-columns-info span');
@@ -186,14 +279,22 @@
             var colNames = [];
             
             var columnMap = {
-                'Product Id': { name: 'id', index: 'id', width: 80 },
+                'Product Id': { name: 'id', index: 'id', width: 80, formatter: function(cellvalue, options, rowObject) {
+                    return '<a href="<%= request.getContextPath() %>/product.do?action=view&id=' + cellvalue + '" target="_blank">' + cellvalue + '</a>';
+                }},
                 'Product Name': { name: 'productName', index: 'productName', width: 200 },
                 'Price': { name: 'price', index: 'price', width: 100, formatter: 'currency' },
                 'Quantity': { name: 'quantity', index: 'quantity', width: 100 },
                 'Sold': { name: 'sold', index: 'sold', width: 80 },
                 'Image': { name: 'image', index: 'image', width: 150 },
-                'Import Date': { name: 'importDate', index: 'importDate', width: 120, formatter: 'date', formatoptions: { srcformat: 'Y-m-d H:i:s', newformat: 'Y-m-d' } }
+                'Import Date': { name: 'importDate', index: 'importDate', width: 120, formatter: 'date', formatoptions: { srcformat: 'Y-m-d H:i:s', newformat: 'Y-m-d' } },
+                'Select': { name: 'select', index: 'select', width: 50, sortable: false, editable: false, search: false, formatter: function(cellvalue, options, rowObject) {
+                    return '<input type="checkbox" class="row-checkbox" value="' + rowObject.id + '">';
+                }}
             };
+            
+            colNames.push('<input type="checkbox" id="jqGrid_selectAllCheckbox" style="width: 18px; height: 18px; cursor: pointer;">');
+            colModel.push(columnMap['Select']);
             
             columns.forEach(function(col) {
                 if (columnMap[col]) {
@@ -217,9 +318,7 @@
                 mtype: "GET",
                 colNames: config.colNames,
                 colModel: config.colModel,
-                pager: '#jqGridPager',
-                rowNum: 10,
-                rowList: [10, 20, 30, 50],
+                rowNum: 5,
                 sortname: 'id',
                 sortorder: 'asc',
                 viewrecords: true,
@@ -235,6 +334,26 @@
                 autowidth: true,
                 loadComplete: function() {
                     jQuery("#jqGrid").jqGrid('setGridWidth', jQuery(".container").width());
+                    var data = jQuery("#jqGrid").jqGrid('getGridParam', 'data');
+                    currentPage = jQuery("#jqGrid").jqGrid('getGridParam', 'page');
+                    totalPages = jQuery("#jqGrid").jqGrid('getGridParam', 'lastpage');
+                    updatePageInfo();
+                    
+                    // Bind select-all checkbox in header
+                    setTimeout(function() {
+                        var headerCheckbox = jQuery("#jqGrid_selectAllCheckbox");
+                        if (headerCheckbox.length > 0) {
+                            headerCheckbox.off('click').on('click', function(e) {
+                                e.stopPropagation();
+                                selectAllRows(this.checked);
+                            });
+                        }
+                    }, 100);
+                    
+                    // Bind individual checkboxes
+                    jQuery('.row-checkbox').on('change', function() {
+                        handleCheckboxChange(this);
+                    });
                 }
             });
             
@@ -242,6 +361,118 @@
                 var newWidth = jQuery(".container").width();
                 jQuery("#jqGrid").jqGrid('setGridWidth', newWidth);
             });
+        }
+
+        function selectAllRows(checked) {
+            if (checked) {
+                jQuery('.row-checkbox').each(function() {
+                    if (!this.checked) {
+                        this.checked = true;
+                        handleCheckboxChange(this);
+                    }
+                });
+            } else {
+                jQuery('.row-checkbox').each(function() {
+                    if (this.checked) {
+                        this.checked = false;
+                        handleCheckboxChange(this);
+                    }
+                });
+            }
+            updateDeleteButton();
+        }
+
+        function handleCheckboxChange(checkbox) {
+            var rowId = jQuery(checkbox).closest('tr').attr('id');
+            if (checkbox.checked) {
+                jQuery("#jqGrid").jqGrid('setSelection', rowId);
+            } else {
+                jQuery("#jqGrid").jqGrid('resetSelection', rowId);
+            }
+            updateDeleteButton();
+        }
+
+        function updateDeleteButton() {
+            var selectedRows = jQuery(".row-checkbox:checked").length;
+            var deleteBtn = jQuery("#deleteBtn");
+            if (selectedRows > 0) {
+                deleteBtn.show();
+                deleteBtn.text("Xóa " + selectedRows + " mục được chọn");
+            } else {
+                deleteBtn.hide();
+            }
+        }
+
+        function getSelectedRows() {
+            var selectedIds = [];
+            jQuery(".row-checkbox:checked").each(function() {
+                selectedIds.push(jQuery(this).val());
+            });
+            return selectedIds;
+        }
+
+        function deleteSelected() {
+            var selectedIds = getSelectedRows();
+            if (selectedIds.length === 0) {
+                alert("Vui lòng chọn ít nhất một mục để xóa");
+                return;
+            }
+            
+            if (!confirm("Bạn có chắc chắn muốn xóa " + selectedIds.length + " mục được chọn?")) {
+                return;
+            }
+            
+            // Send delete request to server
+            jQuery.ajax({
+                url: '<%= request.getContextPath() %>/product.do?action=delete',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    ids: selectedIds.join(',')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert("Xóa thành công");
+                        // Reload grid
+                        jQuery("#jqGrid").jqGrid('setGridParam', {
+                            page: 1
+                        }).trigger("reloadGrid");
+                    } else {
+                        alert("Lỗi: " + response.message);
+                    }
+                },
+                error: function() {
+                    alert("Lỗi xóa dữ liệu");
+                }
+            });
+        }
+
+        function updatePageInfo() {
+            jQuery("#pageInfo").text("Trang " + currentPage + " / " + totalPages);
+        }
+
+        function goToFirstPage() {
+            if (currentPage > 1) {
+                jQuery("#jqGrid").jqGrid('setGridParam', {page: 1}).trigger("reloadGrid");
+            }
+        }
+
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                jQuery("#jqGrid").jqGrid('setGridParam', {page: currentPage - 1}).trigger("reloadGrid");
+            }
+        }
+
+        function goToNextPage() {
+            if (currentPage < totalPages) {
+                jQuery("#jqGrid").jqGrid('setGridParam', {page: currentPage + 1}).trigger("reloadGrid");
+            }
+        }
+
+        function goToLastPage() {
+            if (currentPage < totalPages) {
+                jQuery("#jqGrid").jqGrid('setGridParam', {page: totalPages}).trigger("reloadGrid");
+            }
         }
 
         function searchProducts() {

@@ -8,6 +8,7 @@
         <form-bean name="customerForm" type="com.demo.form.CustomerForm"/>
         <form-bean name="searchForm" type="com.demo.form.SearchForm"/>
         <form-bean name="columnForm" type="com.demo.form.ColumnForm"/>
+        <form-bean name="productSearchForm" type="com.demo.form.ProductSearchForm"/>
     </form-beans>
     
     <!-- Global Forwards -->
@@ -54,7 +55,7 @@
         </action>
         
         <!-- Product Action -->
-        <action path="/product" type="com.demo.action.ProductAction" scope="request">
+        <action path="/product" name="productSearchForm" type="com.demo.action.ProductAction" parameter="action" scope="request">
             <forward name="success" path="/displayItem.jsp"/>
         </action>
         
